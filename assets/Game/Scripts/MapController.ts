@@ -75,6 +75,12 @@ export class MapController extends Component {
         });
     }
 
+    deActiveHorse(index: number) {
+        this.listAllHorse[index].forEach(horse => {
+            horse.onActive(false);
+        })
+    }
+
 }
 
 

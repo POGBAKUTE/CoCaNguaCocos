@@ -2,12 +2,13 @@ import { _decorator, Component, Node } from 'cc';
 import { MapController } from './MapController';
 import { Character } from './Character';
 import { eventTarget } from './GameManager';
+import { Horse, HorseState } from './Horse';
 const { ccclass, property } = _decorator;
 
 
 @ccclass('PlayGame')
 export class PlayGame extends Component {
-    
+    public static Instance: PlayGame;
     @property(MapController)
     map: MapController
 
@@ -15,33 +16,100 @@ export class PlayGame extends Component {
     listCharacter : Character[]=[]
 
     private indexCurrentCharacter: number = 0;
+    private stepCurrent: number = 0;
 
 
 
     protected onLoad(): void {
-        eventTarget.on("MoveHorse", this.onHandleMoveHorse, this)
-        eventTarget.on("NextTurn", this.nextTurn, this)
-        this.indexCurrentCharacter = 0;
-        
-    }
-
-    onHandleMoveHorse(step: number) {
-        if(step === 6) {
-            console.log("Cho di")
+        if (PlayGame.Instance == null) {
+            PlayGame.Instance = this;
         }
         else {
-            console.log("Chua duoc")
+            this.destroy();
+        }
+        eventTarget.on("SelectHorse", this.onHandleSelectHorse, this)
+        eventTarget.on("NextTurn", this.nextTurn, this)
+        eventTarget.on("CompleteTurn", this.onCompleteTurn, this)
+        eventTarget.on("MoveHorse", this.onMoveHorse, this)
+        this.indexCurrentCharacter = 0;
+        this.onInit()
+    }
+
+    onHandleSelectHorse(step: number, id: number) {
+        
+        // if(step === 6) {
+        //     console.log("Cho di nguoi thu " + id)
+        // }
+        // else {
+        //     console.log("Chua duoc nguoi thu " + id)
+        // }
+        // eventTarget.emit("CompleteTurn")
+        console.log("So buoc: " + step)
+        this.stepCurrent = step;
+        let listActiveHorse = this.checkPermissionHorse(step);
+        if(listActiveHorse.length === 0) {
+            eventTarget.emit("CompleteTurn", step)
+        }
+        else if(listActiveHorse.length === 1) {
+
+            listActiveHorse[0].move(step, this.map.listAllPos);
+        }
+        else {
+            listActiveHorse.forEach(horse => {
+                horse.onActive(true);
+            });
         }
     }
 
-    nextTurn() {
-        this.indexCurrentCharacter += 1
+    checkPermissionHorse(step: number) {
+        let listActiveHorse : Array<Horse> = new Array<Horse>()
+        this.map.listAllHorse[this.indexCurrentCharacter].forEach(horse => {
+            if(horse.state === HorseState.RUN || horse.state === HorseState.FINISH) {
+                if(horse.stepHandle + step <= 56) {
+                    listActiveHorse.push(horse)
+                }
+            }
+        });
+        if(step === 6) {
+            for(var horse of this.map.listAllHorse[this.indexCurrentCharacter]) {
+                if(horse.state === HorseState.IDLE) {
+                    listActiveHorse.push(horse)
+                    break;
+                }
+            }
+        }
+        return listActiveHorse;
+    }
+
+    onMoveHorse(idHorse: number, idOwn: number) {
+        this.map.deActiveHorse(this.indexCurrentCharacter)
+        console.log(idHorse + " " + idOwn)
+        this.map.listAllHorse[idOwn - 1][idHorse].move(this.stepCurrent, this.map.listAllPos)
+    }
+
+    nextTurn(step: number) {
+        if(step !== 6) {
+
+            this.indexCurrentCharacter += 1
+        }
         this.indexCurrentCharacter %= this.listCharacter.length;
         this.onHandleTurn()
     }
 
     onHandleTurn() {
+        this.listCharacter[this.indexCurrentCharacter].onActive(true);
+    }
 
+    onCompleteTurn(step: number) {
+        this.listCharacter[this.indexCurrentCharacter].onActive(false);
+        this.nextTurn(step);
+    }
+
+    onInit() {
+        this.listCharacter.forEach(character => {
+            character.onActive(false)
+        });
+        this.onHandleTurn();
     }
 }
 

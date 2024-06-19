@@ -17,12 +17,27 @@ export class Character extends Component {
     @property(CCInteger)
     idCharacter: number
 
-    protected start(): void {
-        eventTarget.on("ClickDice", this.onHandleAfterDice, this)
+    private isClick: boolean = true;
+
+    onHandleAfterDice() {
+        if(this.isClick) {
+            let step = this.randomNumber()
+            this.setIsClick(false);
+            eventTarget.emit("SelectHorse", step, this.idCharacter)
+        }
     }
 
-    onHandleAfterDice(step: number) {
-        eventTarget.emit("MoveHorse", step)
+    setIsClick(active: boolean) {
+        this.isClick = active
+    }
+
+    randomNumber() {
+        return Math.floor(Math.random() * 6) + 1;
+    }
+
+    onActive(active: boolean) {
+        this.setIsClick(active)
+        this.dice.onActive(active);
     }
 }
 
