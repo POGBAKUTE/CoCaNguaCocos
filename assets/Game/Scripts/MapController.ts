@@ -1,6 +1,7 @@
 import { _decorator, Component, Node } from 'cc';
 import { Horse } from './Horse';
 import { Place } from './Place';
+import { DestinationEnd } from './DestinationEnd';
 const { ccclass, property } = _decorator;
 
 @ccclass('MapController')
@@ -32,8 +33,24 @@ export class MapController extends Component {
     @property({type: Place})
     listAllPos: Place[] = []
 
+    @property({type: Place})
+    finishHorse1: Place[] = []
+
+    @property({type: Place})
+    finishHorse2: Place[] = []
+
+    @property({type: Place})
+    finishHorse3: Place[] = []
+
+    @property({type: Place})
+    finishHorse4: Place[] = []
+
+    @property({type: DestinationEnd})
+    endAllHorse: DestinationEnd[] = []
+
     listAllHorse: Array<Horse[]> = new Array<Horse[]>();
     startAllHorse: Array<Node[]> = new Array<Node[]>();
+    finishAllHorse: Array<Place[]> = new Array<Place[]>();
 
     protected start(): void {
         this.onInit();
@@ -43,6 +60,7 @@ export class MapController extends Component {
         this.initListAllHorse()
         this.initStartAllHorse();
         this.resetPosHorse();
+        this.initFinishAllHorse()
     }
 
     initListAllHorse() {
@@ -59,10 +77,17 @@ export class MapController extends Component {
         this.startAllHorse.push(this.startHorse4)
     }
 
+    initFinishAllHorse() {
+        this.finishAllHorse.push(this.finishHorse1)
+        this.finishAllHorse.push(this.finishHorse2)
+        this.finishAllHorse.push(this.finishHorse3)
+        this.finishAllHorse.push(this.finishHorse4)
+    }
+
     resetPosHorse() {
         for(var i = 0; i < this.listAllHorse.length; i++) {
             for(var j = 0; j < this.listAllHorse[i].length; j++) {
-                this.listAllHorse[i][j].setPos(this.startAllHorse[i][j].getPosition());
+                this.listAllHorse[i][j].onInit(this.startAllHorse[i][j].getPosition());
             }
         }
     }

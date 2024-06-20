@@ -50,9 +50,9 @@ export class PlayGame extends Component {
         if(listActiveHorse.length === 0) {
             eventTarget.emit("CompleteTurn", step)
         }
-        else if(listActiveHorse.length === 1) {
+        else if(listActiveHorse.length === 1 || this.checkCommonHorse(listActiveHorse)) {
 
-            listActiveHorse[0].move(step, this.map.listAllPos);
+            listActiveHorse[0].move(step);
         }
         else {
             listActiveHorse.forEach(horse => {
@@ -64,7 +64,10 @@ export class PlayGame extends Component {
     checkPermissionHorse(step: number) {
         let listActiveHorse : Array<Horse> = new Array<Horse>()
         this.map.listAllHorse[this.indexCurrentCharacter].forEach(horse => {
-            if(horse.state === HorseState.RUN || horse.state === HorseState.FINISH) {
+            if(horse.state === HorseState.RUN) {
+                listActiveHorse.push(horse)
+            }
+            else if(horse.state === HorseState.FINISH) {
                 if(horse.stepHandle + step <= 56) {
                     listActiveHorse.push(horse)
                 }
@@ -84,7 +87,7 @@ export class PlayGame extends Component {
     onMoveHorse(idHorse: number, idOwn: number) {
         this.map.deActiveHorse(this.indexCurrentCharacter)
         console.log(idHorse + " " + idOwn)
-        this.map.listAllHorse[idOwn - 1][idHorse].move(this.stepCurrent, this.map.listAllPos)
+        this.map.listAllHorse[idOwn - 1][idHorse].move(this.stepCurrent)
     }
 
     nextTurn(step: number) {
@@ -110,6 +113,15 @@ export class PlayGame extends Component {
             character.onActive(false)
         });
         this.onHandleTurn();
+    }
+
+    checkCommonHorse(listActiveHorse : Array<Horse>) {
+        for(var i = 1; i < listActiveHorse.length; i++) {
+            if(listActiveHorse[i].stepHandle != listActiveHorse[i-1].stepHandle) {
+                return false;
+            }
+        }
+        return true
     }
 }
 

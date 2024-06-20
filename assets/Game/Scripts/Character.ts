@@ -1,4 +1,4 @@
-import { _decorator, CCInteger, Component, Label, Node, Sprite } from 'cc';
+import { _decorator, CCInteger, Component, EditBox, EventKeyboard, input, Input, KeyCode, Label, Node, Sprite } from 'cc';
 import { Dice } from './Dice';
 import { eventTarget } from './GameManager';
 const { ccclass, property } = _decorator;
@@ -16,6 +16,9 @@ export class Character extends Component {
 
     @property(CCInteger)
     idCharacter: number
+    
+    @property(EditBox)
+    editBox: EditBox
 
     private isClick: boolean = true;
 
@@ -25,6 +28,13 @@ export class Character extends Component {
             this.setIsClick(false);
             eventTarget.emit("SelectHorse", step, this.idCharacter)
         }
+    }
+
+    devDice() {
+        let step = parseInt(this.editBox.string)
+        this.editBox.string = ""
+        this.setIsClick(false);
+        eventTarget.emit("SelectHorse", step, this.idCharacter)
     }
 
     setIsClick(active: boolean) {
@@ -38,6 +48,10 @@ export class Character extends Component {
     onActive(active: boolean) {
         this.setIsClick(active)
         this.dice.onActive(active);
+        this.editBox.node.active = active
+        if(active) {
+            this.editBox.setFocus()
+        }
     }
 }
 
