@@ -60,7 +60,6 @@ export class Place extends Component {
     removeHorse(horse: Horse) {
         //xoa ngua neu ngua roi khoi vi tri o
         const index = this.listHorse.indexOf(horse);
-        console.log("INDEX REMOVE: " + index)
         if (index !== -1) {
             //Neu co ngua do trong list thi xoa
             this.listHorse.splice(index, 1);
@@ -106,12 +105,20 @@ export class Place extends Component {
             horseNew.setIsAttack(true)
             let time = 0
             let index = this.listHorse.length;
-            while(index > 0) {
+            while (index > 0) {
                 let horse = this.listHorse[0];
                 this.removeHorse(horse)
-                setTimeout(() => {
-                    horse.moveStart();
-                }, time)
+                if(index === 1) {
+                    setTimeout(() => {
+                        horse.moveStart(true);
+                    }, time)
+
+                }
+                else {
+                    setTimeout(() => {
+                        horse.moveStart(false);
+                    }, time)
+                }
                 time += 200
                 index--
             }
@@ -122,7 +129,34 @@ export class Place extends Component {
 
             this.setPosListHorse();
         }
-            
+
+    }
+
+    checkFull() {
+        return this.listHorse.length >= 4
+    }
+
+    getCountHorseDifferentNORMAL(own: number) {
+        let count = 0;
+        if (this.type === PlaceType.NORMAL) {
+            for (var horse of this.listHorse) {
+                if (horse.own !== own) {
+                    count++;
+                }
+            }
+
+        }
+        return count;
+    }
+
+    getCountHorseDifferentAll(own: number) {
+        let count = 0;
+        for (var horse of this.listHorse) {
+            if (horse.own !== own) {
+                count++;
+            }
+        }
+        return count;
     }
 }
 

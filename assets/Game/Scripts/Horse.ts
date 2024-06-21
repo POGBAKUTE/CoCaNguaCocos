@@ -132,7 +132,7 @@ export class Horse extends Component {
                 //Khi toi dich thi o thuc hien dat ngua vao
                 PlayGame.Instance.map.listAllPos[posTmp].addHorse(this)
                 if (this.isAttack) {
-                    eventTarget.emit("CompleteTurn", 6)
+
                     this.setIsAttack(false)
                 }
                 else {
@@ -143,7 +143,7 @@ export class Horse extends Component {
         }
         else {
             t.call(() => {
-                this.moveFinishState(step - index, true, step)
+                this.moveFinishState(step - index - 1, true, step)
             });
         }
 
@@ -154,8 +154,15 @@ export class Horse extends Component {
         console.log("OKE VE DICH THOI NAO")
         //Set vi tri tu do hien tai toi STEP o tiep theo
         let posTmp = this.stepHandle - 51
+        console.log("POSTMP " + posTmp)
         if(!checkDo) {
-            PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].removeHorse(this)
+            if(this.stepHandle === 50) {
+                PlayGame.Instance.map.listAllPos[(this.stepHandle + this.startPosInMap) % 52].removeHorse(this)
+
+            }
+            else {
+                PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].removeHorse(this)
+            }
 
         }
 
@@ -163,18 +170,35 @@ export class Horse extends Component {
         for (var i = 1; i <= step; i++) {
             this.stepHandle += 1
             posTmp = this.stepHandle - 51
-            t = t.to(this.speedStateRun, { position: PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].getPos() });
+            if(posTmp < 5) {
+                t = t.to(this.speedStateRun, { position: PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].getPos() });
+
+            }
+            else if(posTmp === 5) {
+                t = t.to(this.speedStateRun, { position: PlayGame.Instance.map.endAllHorse[this.own - 1].getPos()});
+                this.state = HorseState.WIN
+                
+            }
         }
         t.call(() => {
+            if(this.state === HorseState.FINISH) {
+                PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].addHorse(this)
+                eventTarget.emit("CompleteTurn", stepPermmiss)
+
+            }
+            else if(this.state === HorseState.WIN) {
+                PlayGame.Instance.map.endAllHorse[this.own - 1].addHorse(this)
+                eventTarget.emit("CompleteTurn", 6)
+                eventTarget.emit("FinishHorse", (this.own - 1))
+            }
             //Khi toi dich thi o thuc hien dat ngua vao
-            PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].addHorse(this)
-            eventTarget.emit("CompleteTurn", stepPermmiss)
         });
 
         t.start();
     }
 
-    moveStart() {
+    moveStart(checkComplete: boolean) {
+        console.log("CHECKCOMPLETE: " + checkComplete)
         //Ve vi tri ban dau
         this.state = HorseState.IDLE
         let t = tween(this.node);
@@ -185,6 +209,11 @@ export class Horse extends Component {
             t = t.to(this.speedStateBack, { position: PlayGame.Instance.map.listAllPos[posTmp].getPos() });
         }
         t = t.to(this.speedStateIdle, { position: PlayGame.Instance.map.startAllHorse[this.own - 1][this.idHorse].getPosition() });
+        if(checkComplete) {
+            t.call(() => {
+                eventTarget.emit("CompleteTurn", 6)
+            });
+        }
         t.start()
         this.stepHandle -= 1
     }
@@ -208,6 +237,7 @@ export class Horse extends Component {
 
     setScaleHorse(amount: number) {
         this.node.scale = new Vec3(amount, amount, amount)
+        this.scaleCurrent = this.node.scale
     }
 
     getScaleHorseStart() {

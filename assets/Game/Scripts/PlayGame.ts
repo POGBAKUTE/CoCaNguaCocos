@@ -31,6 +31,7 @@ export class PlayGame extends Component {
         eventTarget.on("NextTurn", this.nextTurn, this)
         eventTarget.on("CompleteTurn", this.onCompleteTurn, this)
         eventTarget.on("MoveHorse", this.onMoveHorse, this)
+        eventTarget.on("FinishHorse", this.onFinishHorse, this)
         this.indexCurrentCharacter = 0;
         this.onInit()
     }
@@ -58,6 +59,7 @@ export class PlayGame extends Component {
             listActiveHorse.forEach(horse => {
                 horse.onActive(true);
             });
+            this.listCharacter[id-1].onHandleController(listActiveHorse, this.stepCurrent)
         }
     }
 
@@ -65,7 +67,10 @@ export class PlayGame extends Component {
         let listActiveHorse : Array<Horse> = new Array<Horse>()
         this.map.listAllHorse[this.indexCurrentCharacter].forEach(horse => {
             if(horse.state === HorseState.RUN) {
-                listActiveHorse.push(horse)
+                if(!this.map.listAllPos[(horse.stepHandle + step + horse.startPosInMap) % 52].checkFull()) {
+
+                    listActiveHorse.push(horse)
+                }
             }
             else if(horse.state === HorseState.FINISH) {
                 if(horse.stepHandle + step <= 56) {
@@ -86,7 +91,6 @@ export class PlayGame extends Component {
 
     onMoveHorse(idHorse: number, idOwn: number) {
         this.map.deActiveHorse(this.indexCurrentCharacter)
-        console.log(idHorse + " " + idOwn)
         this.map.listAllHorse[idOwn - 1][idHorse].move(this.stepCurrent)
     }
 
@@ -104,8 +108,11 @@ export class PlayGame extends Component {
     }
 
     onCompleteTurn(step: number) {
-        this.listCharacter[this.indexCurrentCharacter].onActive(false);
-        this.nextTurn(step);
+        setTimeout(() => {
+            this.listCharacter[this.indexCurrentCharacter].onActive(false);
+            this.nextTurn(step);
+
+        },1000)
     }
 
     onInit() {
@@ -122,6 +129,15 @@ export class PlayGame extends Component {
             }
         }
         return true
+    }
+
+    onFinishHorse(idOwn : number) {
+        console.log("IDOWN : " +  idOwn)
+        let character : Character = this.listCharacter[idOwn]
+        character.countHorseFinish += 1;
+        if(character.countHorseFinish === 4) {
+            console.log("Nguoi thu " + (idOwn + 1) + " win roi")
+        }
     }
 }
 

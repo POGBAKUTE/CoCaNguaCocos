@@ -1,6 +1,7 @@
 import { _decorator, CCInteger, Component, EditBox, EventKeyboard, input, Input, KeyCode, Label, Node, Sprite } from 'cc';
 import { Dice } from './Dice';
 import { eventTarget } from './GameManager';
+import { Horse } from './Horse';
 const { ccclass, property } = _decorator;
 
 @ccclass('Character')
@@ -21,6 +22,7 @@ export class Character extends Component {
     editBox: EditBox
 
     private isClick: boolean = true;
+    countHorseFinish : number = 0
 
     onHandleAfterDice() {
         if(this.isClick) {
@@ -45,12 +47,21 @@ export class Character extends Component {
         return Math.floor(Math.random() * 6) + 1;
     }
 
+    onHandleClick() {
+
+    }
+
+    onHandleController(listActiveHorse : Array<Horse>, step : number) {
+
+    }
+
     onActive(active: boolean) {
         this.setIsClick(active)
         this.dice.onActive(active);
         this.editBox.node.active = active
         if(active) {
             this.editBox.setFocus()
+            this.onHandleClick()
         }
     }
 }
