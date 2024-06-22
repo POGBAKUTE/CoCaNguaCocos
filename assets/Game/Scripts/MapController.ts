@@ -48,6 +48,9 @@ export class MapController extends Component {
     @property({type: DestinationEnd})
     endAllHorse: DestinationEnd[] = []
 
+    @property({type: Node})
+    listPosPlayer: Node[] = []
+
     listAllHorse: Array<Horse[]> = new Array<Horse[]>();
     startAllHorse: Array<Node[]> = new Array<Node[]>();
     finishAllHorse: Array<Place[]> = new Array<Place[]>();

@@ -1,8 +1,10 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, instantiate, Node, Prefab } from 'cc';
 import { MapController } from './MapController';
 import { Character } from './Character';
 import { eventTarget } from './GameManager';
 import { Horse, HorseState } from './Horse';
+import { Player } from './Player';
+import { Bot } from './Bot';
 const { ccclass, property } = _decorator;
 
 
@@ -12,8 +14,15 @@ export class PlayGame extends Component {
     @property(MapController)
     map: MapController
 
-    @property({type: Character})
+    @property(Prefab)
+    playerPrefab: Prefab
+
+    @property(Prefab)
+    botPrefab: Prefab
+
     listCharacter : Character[]=[]
+
+    countPlayer : number = 4
 
     private indexCurrentCharacter: number = 0;
     private stepCurrent: number = 0;
@@ -33,7 +42,6 @@ export class PlayGame extends Component {
         eventTarget.on("MoveHorse", this.onMoveHorse, this)
         eventTarget.on("FinishHorse", this.onFinishHorse, this)
         this.indexCurrentCharacter = 0;
-        this.onInit()
     }
 
     onHandleSelectHorse(step: number, id: number) {
@@ -61,6 +69,29 @@ export class PlayGame extends Component {
             });
             this.listCharacter[id-1].onHandleController(listActiveHorse, this.stepCurrent)
         }
+    }
+
+    generateCharacter(listCheck: Array<boolean>) {
+        this.countPlayer = listCheck.length
+        for(var i = 0; i < listCheck.length; i++) {
+            if(listCheck[i]) {
+                let playerNode = instantiate(this.playerPrefab)
+                playerNode.parent = this.node.parent
+                playerNode.setPosition(this.map.listPosPlayer[i].getPosition())
+                let player = playerNode.getComponent(Character)
+                player.setCharacter(i+1);
+                this.listCharacter.push(player)
+            }
+            else {
+                let botNode = instantiate(this.botPrefab)
+                botNode.parent = this.node.parent
+                botNode.setPosition(this.map.listPosPlayer[i].getPosition())
+                let bot = botNode.getComponent(Character)
+                bot.setCharacter(i+1);
+                this.listCharacter.push(bot)
+            }
+        }
+        this.onInit()
     }
 
     checkPermissionHorse(step: number) {
@@ -112,7 +143,7 @@ export class PlayGame extends Component {
             this.listCharacter[this.indexCurrentCharacter].onActive(false);
             this.nextTurn(step);
 
-        },1000)
+        },800)
     }
 
     onInit() {

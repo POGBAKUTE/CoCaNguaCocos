@@ -21,14 +21,28 @@ export class Character extends Component {
     @property(EditBox)
     editBox: EditBox
 
+    @property(Label)
+    labelDice: Label
+
     private isClick: boolean = true;
     countHorseFinish : number = 0
 
+    protected start(): void {
+        this.editBox.node.active = false;
+        this.labelDice.string = ""
+    }
+
     onHandleAfterDice() {
+        
         if(this.isClick) {
-            let step = this.randomNumber()
             this.setIsClick(false);
-            eventTarget.emit("SelectHorse", step, this.idCharacter)
+            let step = this.randomNumber()
+            
+            setTimeout(() => {
+                this.labelDice.string = step.toString();
+                eventTarget.emit("SelectHorse", step, this.idCharacter)
+            
+            }, 1000)
         }
     }
 
@@ -58,11 +72,17 @@ export class Character extends Component {
     onActive(active: boolean) {
         this.setIsClick(active)
         this.dice.onActive(active);
-        this.editBox.node.active = active
+        // this.editBox.node.active = active
         if(active) {
-            this.editBox.setFocus()
+            // this.editBox.setFocus()
             this.onHandleClick()
         }
+        this.labelDice.string = ""
+    }
+
+    setCharacter(index: number) {
+        this.idCharacter = index;
+        this.nameCharacter.string += " " + index
     }
 }
 
