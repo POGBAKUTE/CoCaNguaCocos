@@ -28,7 +28,7 @@ export class Character extends Component {
     countHorseFinish : number = 0
 
     protected start(): void {
-        this.editBox.node.active = false;
+        // this.editBox.node.active = false;
         this.labelDice.string = ""
     }
 
@@ -72,17 +72,17 @@ export class Character extends Component {
     onActive(active: boolean) {
         this.setIsClick(active)
         this.dice.onActive(active);
-        // this.editBox.node.active = active
+        this.editBox.node.active = active
         if(active) {
-            // this.editBox.setFocus()
+            this.editBox.setFocus()
             this.onHandleClick()
         }
         this.labelDice.string = ""
     }
 
-    setCharacter(index: number) {
+    setCharacter(index: number, name : string) {
         this.idCharacter = index;
-        this.nameCharacter.string += " " + index
+        this.nameCharacter.string = name
     }
 }
 

@@ -22,11 +22,32 @@ export class UIManager extends Component {
     }
 
     loadUI() {
-        const loadPromise = new Promise<void>((resolve, reject) => {
+        // const loadPromise = new Promise<void>((resolve, reject) => {
+        //     resources.loadDir('UI/', Prefab, (err, prefabs) => {
+        //         if (err) {
+        //             console.error('Failed to load UI prefabs', err);
+        //             reject(err);
+        //         } else {
+        //             prefabs.forEach(prefab => {
+        //                 const comp = prefab.data.getComponent(UICanvas);
+        //                 if (comp) {
+        //                     this.canvasPrefabs.set(comp.constructor, prefab);
+        //                 }
+        //             });
+        //             resolve();
+        //         }
+
+        //     });
+        // });
+    
+        // loadPromise.then(() => {
+        //     this.openUI(UISelectPlayer);
+        // }).catch(error => {
+        //     console.error('Failed to load UI prefabs', error);
+        // });
             resources.loadDir('UI/', Prefab, (err, prefabs) => {
                 if (err) {
                     console.error('Failed to load UI prefabs', err);
-                    reject(err);
                 } else {
                     prefabs.forEach(prefab => {
                         const comp = prefab.data.getComponent(UICanvas);
@@ -34,16 +55,10 @@ export class UIManager extends Component {
                             this.canvasPrefabs.set(comp.constructor, prefab);
                         }
                     });
-                    resolve();
                 }
+                this.openUI(UISelectPlayer);
+                
             });
-        });
-    
-        loadPromise.then(() => {
-            this.openUI(UISelectPlayer);
-        }).catch(error => {
-            console.error('Failed to load UI prefabs', error);
-        });
     }
 
     openUI<T extends UICanvas>(UIClass: new () => T): T {

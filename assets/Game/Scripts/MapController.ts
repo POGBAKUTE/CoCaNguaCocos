@@ -64,6 +64,7 @@ export class MapController extends Component {
         this.initStartAllHorse();
         this.resetPosHorse();
         this.initFinishAllHorse()
+        this.deActiveAllCharacter()
     }
 
     initListAllHorse() {
@@ -106,6 +107,21 @@ export class MapController extends Component {
     deActiveHorse(index: number) {
         this.listAllHorse[index].forEach(horse => {
             horse.onActive(false);
+        })
+    }
+
+    activeCharacter(id : number) {
+        this.listAllHorse[id].forEach(horse => {
+            horse.node.active = true;
+        })
+    }
+
+    deActiveAllCharacter() {
+        console.log("DUDDHD")
+        this.listAllHorse.forEach(listHorse => {
+            listHorse.forEach(horse => {
+                horse.node.active = false
+            })
         })
     }
 

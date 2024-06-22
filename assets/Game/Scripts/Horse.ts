@@ -120,6 +120,7 @@ export class Horse extends Component {
                     this.state = HorseState.FINISH;
                     if(i < step) {
                         checkComplete = false
+                        index = i
                     }
                 }
                 posTmp = (this.stepHandle + this.startPosInMap) % 52
@@ -143,7 +144,7 @@ export class Horse extends Component {
         }
         else {
             t.call(() => {
-                this.moveFinishState(step - index - 1, true, step)
+                this.moveFinishState(step - index, true, step)
             });
         }
 

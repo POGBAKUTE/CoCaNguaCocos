@@ -5,14 +5,16 @@ import { eventTarget } from './GameManager';
 import { Horse, HorseState } from './Horse';
 import { Player } from './Player';
 import { Bot } from './Bot';
+import { UIManager } from './UI/UIManager';
+import { UIVictory } from './UI/UIVictory';
 const { ccclass, property } = _decorator;
 
 
 @ccclass('PlayGame')
 export class PlayGame extends Component {
     public static Instance: PlayGame;
-    @property(MapController)
-    map: MapController
+    @property(Prefab)
+    mapPrefab: Prefab
 
     @property(Prefab)
     playerPrefab: Prefab
@@ -21,6 +23,7 @@ export class PlayGame extends Component {
     botPrefab: Prefab
 
     listCharacter : Character[]=[]
+    map : MapController = null;
 
     countPlayer : number = 4
 
@@ -42,6 +45,14 @@ export class PlayGame extends Component {
         eventTarget.on("MoveHorse", this.onMoveHorse, this)
         eventTarget.on("FinishHorse", this.onFinishHorse, this)
         this.indexCurrentCharacter = 0;
+    }
+
+    protected onDestroy(): void {
+        eventTarget.off("SelectHorse", this.onHandleSelectHorse, this)
+        eventTarget.off("NextTurn", this.nextTurn, this)
+        eventTarget.off("CompleteTurn", this.onCompleteTurn, this)
+        eventTarget.off("MoveHorse", this.onMoveHorse, this)
+        eventTarget.off("FinishHorse", this.onFinishHorse, this)
     }
 
     onHandleSelectHorse(step: number, id: number) {
@@ -71,7 +82,24 @@ export class PlayGame extends Component {
         }
     }
 
-    generateCharacter(listCheck: Array<boolean>) {
+    generateLevel(listCheck: Array<boolean>, listName : Array<string>) {
+        this.generateMap()
+        setTimeout(() => {
+
+            this.generateCharacter(listCheck, listName)
+        },5)
+        this.onInit()
+    }
+
+    destroyLevel() {
+        this.map.node.destroy();
+        for(var character of this.listCharacter) {
+            character.node.destroy();
+        }
+        this.listCharacter = new Array<Character>()
+    }
+
+    generateCharacter(listCheck: Array<boolean>, listName : Array<string>) {
         this.countPlayer = listCheck.length
         for(var i = 0; i < listCheck.length; i++) {
             if(listCheck[i]) {
@@ -79,7 +107,7 @@ export class PlayGame extends Component {
                 playerNode.parent = this.node.parent
                 playerNode.setPosition(this.map.listPosPlayer[i].getPosition())
                 let player = playerNode.getComponent(Character)
-                player.setCharacter(i+1);
+                player.setCharacter(i+1, listName[i]);
                 this.listCharacter.push(player)
             }
             else {
@@ -87,11 +115,19 @@ export class PlayGame extends Component {
                 botNode.parent = this.node.parent
                 botNode.setPosition(this.map.listPosPlayer[i].getPosition())
                 let bot = botNode.getComponent(Character)
-                bot.setCharacter(i+1);
+                bot.setCharacter(i+1, listName[i]);
                 this.listCharacter.push(bot)
             }
+            this.map.activeCharacter(i)
         }
-        this.onInit()
+        
+    }
+
+    generateMap() {
+        let mapNode = instantiate(this.mapPrefab)
+        mapNode.parent = this.node.parent
+        mapNode.setSiblingIndex(0)
+        this.map = mapNode.getComponent(MapController);
     }
 
     checkPermissionHorse(step: number) {
@@ -168,6 +204,8 @@ export class PlayGame extends Component {
         character.countHorseFinish += 1;
         if(character.countHorseFinish === 4) {
             console.log("Nguoi thu " + (idOwn + 1) + " win roi")
+            UIManager.Instance.openUI(UIVictory)
+            UIManager.Instance.getUI(UIVictory).updateNotify(character.nameCharacter.string)
         }
     }
 }

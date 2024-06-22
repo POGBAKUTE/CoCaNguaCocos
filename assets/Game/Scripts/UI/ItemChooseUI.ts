@@ -1,10 +1,13 @@
-import { _decorator, Component, Label, Node, Toggle } from 'cc';
+import { _decorator, Color, Component, EditBox, Label, Node, Sprite, Toggle } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('ItemChooseUI')
 export class ItemChooseUI extends Component {
     @property(Label)
     labelName: Label
+
+    @property(EditBox)
+    boxName: EditBox
 
     @property(Toggle)
     bot: Toggle
@@ -31,7 +34,15 @@ export class ItemChooseUI extends Component {
     }
 
     setName(index : number) {
-        this.labelName.string = "Người chơi " + index
+        this.boxName.string = "Player " + index
+    }
+
+    getName() {
+        return this.boxName.string
+    }
+
+    setColor(color: Color) {
+        this.boxName.getComponent(Sprite).color = color
     }
 }
 
