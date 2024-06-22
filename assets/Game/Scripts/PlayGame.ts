@@ -87,8 +87,8 @@ export class PlayGame extends Component {
         setTimeout(() => {
 
             this.generateCharacter(listCheck, listName)
+            this.onInit()
         },5)
-        this.onInit()
     }
 
     destroyLevel() {
