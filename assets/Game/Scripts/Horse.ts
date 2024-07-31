@@ -1,4 +1,4 @@
-import { _decorator, Button, CCInteger, Component, Enum, Node, tween, Vec3 } from 'cc';
+import { _decorator, bezier, Button, CCInteger, Component, easing, Enum, Node, tween, v3, Vec3 } from 'cc';
 import { eventTarget } from './GameManager';
 import { Place } from './Place';
 import { PlayGame } from './PlayGame';
@@ -35,6 +35,9 @@ export class Horse extends Component {
     private speedStateIdle: number = 0.5
     private speedStateBack: number = 0.1
 
+
+    private highJumpIdleState: number = 100
+    private highJumpIdleRun: number = 20
 
     protected start(): void {
         this.onActive(false)
@@ -92,12 +95,36 @@ export class Horse extends Component {
         }
     }
 
+    calculateQuadraticBezierPoint(t, p0, p1, p2) {
+        const x =
+            (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;
+        const y =
+            (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;
+        return new Vec3(x, y, 0);
+    }
+
     moveIdleState(step: number) {
         //Set vi tri thanh o xuat phat ban dau
         this.stepHandle += 1
         let posTmp = (this.stepHandle + this.startPosInMap) % 52
+        let startPos = this.node.getPosition();
+        let endPos = PlayGame.Instance.map.listAllPos[posTmp].getPos()
+        let middlePosX = (startPos.x + endPos.x) / 2
+        let middlePosY = (startPos.y + endPos.y) / 2
+        let controlPos = new Vec3(middlePosX + this.highJumpIdleState, middlePosY + this.highJumpIdleState)
         let t = tween(this.node);
-        t.to(this.speedStateIdle, { position: PlayGame.Instance.map.listAllPos[posTmp].getPos() });
+        t.to(this.speedStateIdle, {}, {
+            onUpdate: (target: Node, ratio) => {
+                let pos = this.calculateQuadraticBezierPoint(
+                    ratio,
+                    startPos,
+                    controlPos,
+                    endPos
+                );
+                target.setPosition(pos.x, pos.y, pos.z);
+            },
+            easing: easing.cubicOut
+        })
         t.call(() => {
             PlayGame.Instance.map.listAllPos[posTmp].addHorse(this)
             eventTarget.emit("CompleteTurn", step)
@@ -109,7 +136,7 @@ export class Horse extends Component {
         //Set vi tri tu do hien tai toi STEP o tiep theo
         let posTmp = (this.stepHandle + this.startPosInMap) % 52
         PlayGame.Instance.map.listAllPos[posTmp].removeHorse(this)
-        let checkComplete : Boolean = true
+        let checkComplete: Boolean = true
         let t = tween(this.node);
         let index = 0;
         for (var i = 1; i <= step; i++) {
@@ -118,16 +145,43 @@ export class Horse extends Component {
                 this.stepHandle += 1
                 if (this.stepHandle + 1 === 51) {
                     this.state = HorseState.FINISH;
-                    if(i < step) {
+                    if (i < step) {
                         checkComplete = false
                         index = i
                     }
                 }
                 posTmp = (this.stepHandle + this.startPosInMap) % 52
-                t = t.to(this.speedStateRun, { position: PlayGame.Instance.map.listAllPos[posTmp].getPos() });
+                let startPos = PlayGame.Instance.map.listAllPos[(this.stepHandle - 1 + this.startPosInMap) % 52].getPos()
+                let endPos = PlayGame.Instance.map.listAllPos[posTmp].getPos()
+                let middlePosX = (startPos.x + endPos.x) / 2
+                let middlePosY = (startPos.y + endPos.y) / 2
+                let controlPos
+                if ((5 <= posTmp && posTmp <= 10) || (13 <= posTmp && posTmp <= 17) ||
+                    (24 <= posTmp && posTmp <= 25) || (32 <= posTmp && posTmp <= 36) || (39 <= posTmp && posTmp <= 43) || (50 <= posTmp && posTmp <= 51)) {
+                    controlPos = new Vec3(middlePosX, middlePosY + this.highJumpIdleRun)
+                }
+                else {
+
+                    controlPos = new Vec3(middlePosX - this.highJumpIdleRun, middlePosY)
+                }
+                t = t.to(this.speedStateRun, {}, {
+                    onUpdate: (target: Node, ratio) => {
+                        let pos = this.calculateQuadraticBezierPoint(
+                            ratio,
+                            startPos,
+                            controlPos,
+                            endPos
+                        );
+                        target.setPosition(pos.x, pos.y, pos.z);
+                        let scale = (-0.4 * ratio * ratio + 0.4 * ratio + 1) * this.scaleHorseStart
+                        console.log(scale)
+                        target.setScale(new Vec3(scale, scale, scale))
+                    },
+                    easing: easing.cubicOut
+                });
             }
         }
-        if(checkComplete) {
+        if (checkComplete) {
 
             t.call(() => {
                 //Khi toi dich thi o thuc hien dat ngua vao
@@ -138,7 +192,7 @@ export class Horse extends Component {
                 }
                 else {
                     eventTarget.emit("CompleteTurn", step)
-    
+
                 }
             });
         }
@@ -152,12 +206,10 @@ export class Horse extends Component {
     }
 
     moveFinishState(step: number, checkDo: boolean, stepPermmiss) {
-        console.log("OKE VE DICH THOI NAO")
         //Set vi tri tu do hien tai toi STEP o tiep theo
         let posTmp = this.stepHandle - 51
-        console.log("POSTMP " + posTmp)
-        if(!checkDo) {
-            if(this.stepHandle === 50) {
+        if (!checkDo) {
+            if (this.stepHandle === 50) {
                 PlayGame.Instance.map.listAllPos[(this.stepHandle + this.startPosInMap) % 52].removeHorse(this)
 
             }
@@ -171,23 +223,54 @@ export class Horse extends Component {
         for (var i = 1; i <= step; i++) {
             this.stepHandle += 1
             posTmp = this.stepHandle - 51
-            if(posTmp < 5) {
-                t = t.to(this.speedStateRun, { position: PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].getPos() });
-
+            let startPos
+            if(posTmp !== 0) {
+                startPos = PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp - 1].getPos()
             }
-            else if(posTmp === 5) {
-                t = t.to(this.speedStateRun, { position: PlayGame.Instance.map.endAllHorse[this.own - 1].getPos()});
+            else {
+                startPos = PlayGame.Instance.map.listAllPos[(50 + this.startPosInMap) % 52].getPos()
+            }
+            let endPos
+            if(posTmp != 5) {
+                endPos = PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].getPos()
+            }
+            else {
                 this.state = HorseState.WIN
-                
+                endPos = PlayGame.Instance.map.endAllHorse[this.own - 1].getPos()
             }
+            let middlePosX = (startPos.x + endPos.x) / 2
+            let middlePosY = (startPos.y + endPos.y) / 2
+            let controlPos
+            if (this.own === 2 || this.own === 4) {
+                controlPos = new Vec3(middlePosX, middlePosY + this.highJumpIdleRun)
+            }
+            else {
+
+                controlPos = new Vec3(middlePosX - this.highJumpIdleRun, middlePosY)
+            }
+            t = t.to(this.speedStateRun, {}, {
+                onUpdate: (target: Node, ratio) => {
+                    let pos = this.calculateQuadraticBezierPoint(
+                        ratio,
+                        startPos,
+                        controlPos,
+                        endPos
+                    );
+                    target.setPosition(pos.x, pos.y, pos.z);
+                    let scale = (-0.4 * ratio * ratio + 0.4 * ratio + 1) * this.scaleHorseStart
+                    console.log(scale)
+                    target.setScale(new Vec3(scale, scale, scale))
+                },
+                easing: easing.cubicOut
+            });  
         }
         t.call(() => {
-            if(this.state === HorseState.FINISH) {
+            if (this.state === HorseState.FINISH) {
                 PlayGame.Instance.map.finishAllHorse[this.own - 1][posTmp].addHorse(this)
                 eventTarget.emit("CompleteTurn", stepPermmiss)
 
             }
-            else if(this.state === HorseState.WIN) {
+            else if (this.state === HorseState.WIN) {
                 PlayGame.Instance.map.endAllHorse[this.own - 1].addHorse(this)
                 eventTarget.emit("CompleteTurn", 6)
                 eventTarget.emit("FinishHorse", (this.own - 1))
@@ -199,7 +282,6 @@ export class Horse extends Component {
     }
 
     moveStart(checkComplete: boolean) {
-        console.log("CHECKCOMPLETE: " + checkComplete)
         //Ve vi tri ban dau
         this.state = HorseState.IDLE
         let t = tween(this.node);
@@ -210,7 +292,7 @@ export class Horse extends Component {
             t = t.to(this.speedStateBack, { position: PlayGame.Instance.map.listAllPos[posTmp].getPos() });
         }
         t = t.to(this.speedStateIdle, { position: PlayGame.Instance.map.startAllHorse[this.own - 1][this.idHorse].getPosition() });
-        if(checkComplete) {
+        if (checkComplete) {
             t.call(() => {
                 eventTarget.emit("CompleteTurn", 6)
             });

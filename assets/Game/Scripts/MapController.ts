@@ -65,6 +65,7 @@ export class MapController extends Component {
         this.resetPosHorse();
         this.initFinishAllHorse()
         this.deActiveAllCharacter()
+        this.initDestinationEnd()
     }
 
     initListAllHorse() {
@@ -123,6 +124,12 @@ export class MapController extends Component {
                 horse.node.active = false
             })
         })
+    }
+
+    initDestinationEnd() {
+        for(var i = 1; i <= 4; i++) {
+            this.endAllHorse[i-1].onInit(i);
+        }
     }
 
 }

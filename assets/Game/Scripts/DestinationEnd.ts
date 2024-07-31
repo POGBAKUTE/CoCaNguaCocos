@@ -6,16 +6,22 @@ const { ccclass, property } = _decorator;
 export class DestinationEnd extends Component {
     listPos : Array<Vec3> = new Array<Vec3>()
     distance : number = 10
-    start() {
-        this.onInit()
-    }
 
-    onInit() {
+    onInit(index) {
         let pos = this.node.getPosition();
-        this.listPos.push(new Vec3(pos.x - 2 * this.distance, pos.y, pos.z))
-        this.listPos.push(new Vec3(pos.x - this.distance, pos.y, pos.z))
-        this.listPos.push(new Vec3(pos.x + this.distance, pos.y, pos.z))
-        this.listPos.push(new Vec3(pos.x + 2 * this.distance, pos.y, pos.z))
+        if(index === 1 || index === 3) {
+
+            this.listPos.push(new Vec3(pos.x - 2 * this.distance, pos.y, pos.z))
+            this.listPos.push(new Vec3(pos.x - this.distance, pos.y, pos.z))
+            this.listPos.push(new Vec3(pos.x + this.distance, pos.y, pos.z))
+            this.listPos.push(new Vec3(pos.x + 2 * this.distance, pos.y, pos.z))
+        }
+        else {
+            this.listPos.push(new Vec3(pos.x , pos.y- 2 * this.distance, pos.z))
+            this.listPos.push(new Vec3(pos.x , pos.y - this.distance, pos.z))
+            this.listPos.push(new Vec3(pos.x , pos.y + this.distance, pos.z))
+            this.listPos.push(new Vec3(pos.x , pos.y + 2 * this.distance, pos.z))
+        }
     }
 
     addHorse(horse : Horse) {
